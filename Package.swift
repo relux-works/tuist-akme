@@ -21,6 +21,9 @@ private enum BuildEnvironment: CaseIterable {
         settings["IPHONEOS_DEPLOYMENT_TARGET"] = "16.0"
         settings["MACOSX_DEPLOYMENT_TARGET"] = "13.0"
         settings["SWIFT_VERSION"] = "5.9"
+        settings["STRING_CATALOG_GENERATE_SYMBOLS"] = "YES"
+        settings["ENABLE_USER_SCRIPT_SANDBOXING"] = "YES"
+        settings["ENABLE_MODULE_VERIFIER"] = "YES"
 
         switch self {
         case .debug:
@@ -55,7 +58,6 @@ private extension Settings {
         .settings(
             configurations: BuildEnvironment.allCases.map { environment in
                 var settings = environment.settings()
-                settings["ENABLE_MODULE_VERIFIER"] = "NO"
                 return environment.configuration(with: settings)
             }
         )
@@ -64,8 +66,7 @@ private extension Settings {
 
 let packageSettings = PackageSettings(
     productTypes: [
-        "Kingfisher": .framework,
-        // Define external frameworks as dynamic by default to share memory
+        "Algorithms": .framework,
     ],
     baseSettings: .externalDependencyModuleSettings
 )
@@ -74,7 +75,7 @@ let packageSettings = PackageSettings(
 let package = Package(
     name: "AcmeAppDependencies",
     dependencies: [
-        .package(url: "https://github.com/onevcat/Kingfisher", from: "7.10.0"),
+        .package(url: "https://github.com/apple/swift-algorithms.git", from: "1.2.1"),
         // Add other dependencies here
     ]
 )

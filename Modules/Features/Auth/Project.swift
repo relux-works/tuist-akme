@@ -1,5 +1,6 @@
 @preconcurrency import ProjectDescription
 @preconcurrency import ProjectInfraPlugin
+@preconcurrency import ProjectDescriptionHelpers
 
 let module = ModuleID(.feature, "Auth")
 
@@ -8,7 +9,7 @@ let project = ProjectFactory.makeFeature(
     destinations: Destinations.iOS.union(Destinations.macOS),
     product: .framework,
     dependencies: [
-        .external("Kingfisher"),
+        .external(dependency: .algorithms),
         // Example: .interface(ModuleID(.core, "Networking"))
     ],
     testDependencies: [

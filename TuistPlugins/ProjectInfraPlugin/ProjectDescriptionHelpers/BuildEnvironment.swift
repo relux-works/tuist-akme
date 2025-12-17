@@ -16,6 +16,9 @@ public enum BuildEnvironment: String, CaseIterable {
 
         settings["IPHONEOS_DEPLOYMENT_TARGET"] = "16.0"
         settings["SWIFT_VERSION"] = "6.2"
+        settings["STRING_CATALOG_GENERATE_SYMBOLS"] = "YES"
+        settings["ENABLE_USER_SCRIPT_SANDBOXING"] = "YES"
+        settings["ENABLE_MODULE_VERIFIER"] = "YES"
 
         switch self {
         case .debug:
@@ -56,7 +59,6 @@ public extension Settings {
         .settings(
             configurations: BuildEnvironment.allCases.map { environment in
                 var settings = environment.settings()
-                settings["ENABLE_MODULE_VERIFIER"] = "NO"
                 switch environment {
                 case .debug:
                     return .debug(name: environment.configurationName, settings: settings)
@@ -67,4 +69,3 @@ public extension Settings {
         )
     }
 }
-

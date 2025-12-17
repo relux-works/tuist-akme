@@ -1,0 +1,72 @@
+### macOS ###
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+### Xcode ###
+# Tuist generates these. NEVER commit them.
+*.xcodeproj
+*.xcworkspace
+
+# Build artifacts
+build/
+DerivedData/
+*.moved-aside
+*.xccheckout
+*.xcscmblueprint
+
+# User settings
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+*.xcuserstate
+xcuserdata/
+
+### Tuist ###
+# Tuist internal artifacts and cache
+Tuist/Derived/
+Tuist/.build/
+.tuist-bin/
+.tuist-version # Optional: commit if you enforce version, ignore if developer choice
+
+# Generated Graphs
+graph.png
+graph.dot
+
+### Swift Package Manager ###
+# We commit Package.resolved for reproducible builds, 
+# but ignore the build artifacts.
+.build/
+Packages/
+.swiftpm/
+
+### Obj-C / Swift ###
+# Coverage reports
+*.gcno
+*.gcda
+*.gcov
+
+### Fastlane ###
+fastlane/report.xml
+fastlane/preview/
+fastlane/screenshots
+fastlane/test_output
+
+### CocoaPods (If legacy plugins use it) ###
+Pods/
+Podfile.lock
+
+### Other Editors ###
+.vscode/
+*.swp
+*~
+
+### Credentials & Secrets ###
+# Pattern to prevent accidental commit of keys
+*secrets.swift
+*Secrets.swift
+*.p12
+*.cer
+*.pem
+*.key

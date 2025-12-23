@@ -1,18 +1,23 @@
 import ProjectDescription
 import ProjectInfraPlugin
+import ProjectDescriptionHelpers
 
-let target = TargetFactory.makeExtension(
-    name: "AcmeWidget",
-    destinations: .iOS,
-    product: .appExtension,
-    dependencies: [
-        .project(target: "Auth", path: .relativeToRoot("Modules/Features/Auth")),
-    ],
-    resources: ["Resources/**"]
-)
+let developmentTeamId = Environment.developmentTeamId.getString(default: "")
 
 let project = Project(
     name: "AcmeWidget",
-    targets: [target]
+    targets: [
+        TargetFactory.makeExtension(
+            name: "AcmeWidget",
+            hostBundleId: AppIdentifiers.iOSApp.bundleId,
+            destinations: .iOS,
+            product: .appExtension,
+            resources: ["Resources/**"],
+            dependencies: [
+                .project(target: "Auth", path: .relativeToRoot("Modules/Features/Auth")),
+            ],
+            developmentTeamId: developmentTeamId
+        ),
+    ]
 )
 

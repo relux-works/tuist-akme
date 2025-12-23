@@ -1,18 +1,41 @@
 #MARK: - Configuration
-.PHONY: bootstrap generate clean sync-modules module tuist-generate
+.PHONY: bootstrap ensure-env generate clean sync-modules module tuist-generate
 
 # Default action when typing just 'make'
 .DEFAULT_GOAL := generate
 
-ifdef GITLAB_CI
-	tuist_generate_args := --no-open
+# Detect CI environments (common flags).
+ifneq ($(CI)$(GITLAB_CI)$(GITHUB_ACTIONS),)
+	IS_CI := true
+	tuist_generate_args ?= --no-open
+else
+	IS_CI := false
 endif
+
+# Load local environment variables (if present) and export them to child processes (Tuist).
+-include .env
+export
+
+# Tuist manifests can only read `TUIST_*` variables when sandboxing is enabled.
+# We keep the user-facing variable `DEVELOPMENT_TEAM_ID` and map it to `TUIST_DEVELOPMENT_TEAM_ID`.
+ifndef TUIST_DEVELOPMENT_TEAM_ID
+TUIST_DEVELOPMENT_TEAM_ID := $(DEVELOPMENT_TEAM_ID)
+endif
+export TUIST_DEVELOPMENT_TEAM_ID
+
+# Bundle ID suffix is used to avoid local signing conflicts (for example `.ivan`).
+# We keep the user-facing variable `BUNDLE_ID_SUFFIX` and map it to `TUIST_BUNDLE_ID_SUFFIX`.
+ifndef TUIST_BUNDLE_ID_SUFFIX
+TUIST_BUNDLE_ID_SUFFIX := $(BUNDLE_ID_SUFFIX)
+endif
+export TUIST_BUNDLE_ID_SUFFIX
 
 #MARK: - Bootstrap (Setup Environment)
 # 1. Checks/Installs Homebrew
 # 2. Checks/Installs Tuist
-# 3. Fetches Dependencies
-# 4. Creates a .bootstrapped marker file
+# 3. Prompts for local environment (.env)
+# 4. Fetches Dependencies
+# 5. Creates a .bootstrapped marker file
 bootstrap:
 	@echo "🚀 Bootstrapping environment..."
 	@# 1. Check Homebrew
@@ -26,10 +49,12 @@ bootstrap:
 		echo "🛠 Installing Tuist..."; \
 		curl -Ls https://install.tuist.io | bash; \
 	fi
-	@# 3. Install Dependencies
+	@# 3. Setup Local Environment (.env)
+	@$(MAKE) ensure-env
+	@# 4. Install Dependencies
 	@echo "⬇️ Fetching dependencies..."
 	@tuist install
-	@# 4. Create marker file
+	@# 5. Create marker file
 	@touch .bootstrapped
 
 #MARK: - Generate Project
@@ -39,8 +64,57 @@ generate:
 		echo "🆕 First time run detected. Initializing..."; \
 		$(MAKE) bootstrap; \
 	fi
+	@$(MAKE) ensure-env
 	@$(MAKE) sync-modules
 	@$(MAKE) tuist-generate
+
+#MARK: - Local Environment
+ensure-env:
+	@if [ "$(IS_CI)" = "true" ]; then \
+		exit 0; \
+	fi; \
+	touch .env; \
+	append_env() { \
+		key="$$1"; value="$$2"; \
+		if [ -s .env ]; then \
+			printf "\n%s=%s\n" "$$key" "$$value" >> .env; \
+		else \
+			printf "%s=%s\n" "$$key" "$$value" > .env; \
+		fi; \
+	}; \
+	has_key() { grep -q "^$$1=" .env; }; \
+	if has_key DEVELOPMENT_TEAM_ID && has_key BUNDLE_ID_SUFFIX; then \
+		exit 0; \
+	fi; \
+	echo "⚙️  Configuring local environment..."; \
+	if ! has_key DEVELOPMENT_TEAM_ID; then \
+		if [ -n "$(DEVELOPMENT_TEAM_ID)" ]; then \
+			append_env DEVELOPMENT_TEAM_ID "$(DEVELOPMENT_TEAM_ID)"; \
+			echo "✅ Saved Team ID to .env"; \
+		else \
+			printf "🔐 Enter your Apple Development Team ID (Press Enter to skip): "; \
+			read team_id; \
+			append_env DEVELOPMENT_TEAM_ID "$$team_id"; \
+			if [ -n "$$team_id" ]; then \
+				echo "✅ Saved Team ID to .env"; \
+			else \
+				echo "⚠️  Skipping Team ID. You may have signing issues on device."; \
+			fi; \
+		fi; \
+	fi; \
+	if ! has_key BUNDLE_ID_SUFFIX; then \
+		if [ -n "$(BUNDLE_ID_SUFFIX)" ]; then \
+			append_env BUNDLE_ID_SUFFIX "$(BUNDLE_ID_SUFFIX)"; \
+			echo "✅ Saved bundle ID suffix to .env"; \
+		else \
+			printf "🪪 Enter a bundle ID suffix (e.g. .ivan) (Press Enter to skip): "; \
+			read bundle_suffix; \
+			append_env BUNDLE_ID_SUFFIX "$$bundle_suffix"; \
+			if [ -n "$$bundle_suffix" ]; then \
+				echo "✅ Saved bundle ID suffix to .env"; \
+			fi; \
+		fi; \
+	fi
 
 #MARK: - Modules
 sync-modules:

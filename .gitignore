@@ -1,5 +1,6 @@
 ### Make ###
 .bootstrapped
+.env
 
 ### macOS ###
 .DS_Store

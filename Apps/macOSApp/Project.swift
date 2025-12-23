@@ -1,23 +1,19 @@
 import ProjectDescription
 import ProjectInfraPlugin
+import ProjectDescriptionHelpers
 
-let project = Project(
-    name: "macOSApp",
-    targets: [
-        .target(
-            name: "AcmeMacApp",
-            destinations: .macOS,
-            product: .app,
-            bundleId: "com.acme.mac-app",
-            deploymentTargets: .macOS("13.0"),
-            infoPlist: .default,
-            sources: ["Sources/**"],
-            resources: ["Resources/**"],
-            dependencies: [
-                .project(target: "Auth", path: .relativeToRoot("Modules/Features/Auth")),
-            ],
-            settings: .regular
-        ),
-    ]
+let developmentTeamId = Environment.developmentTeamId.getString(default: "")
+
+let project = ProjectFactory.makeApp(
+    projectName: "macOSApp",
+    appName: "AcmeMacApp",
+    bundleId: AppIdentifiers.macOSApp.bundleId,
+    destinations: .macOS,
+    deploymentTargets: .macOS("13.0"),
+    sources: ["Sources/**"],
+    resources: ["Resources/**"],
+    dependencies: [
+        .project(target: "Auth", path: .relativeToRoot("Modules/Features/Auth")),
+    ],
+    developmentTeamId: developmentTeamId
 )
-

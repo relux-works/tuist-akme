@@ -1,6 +1,71 @@
 import ProjectDescription
 
 public enum ProjectFactory {
+    public static func makeApp(
+        projectName: String,
+        appName: String? = nil,
+        bundleId: String,
+        destinations: Destinations,
+        deploymentTargets: DeploymentTargets? = nil,
+        sources: SourceFilesList = ["Sources/**"],
+        resources: ResourceFileElements? = ["Resources/**"],
+        infoPlist: InfoPlist = .default,
+        dependencies: [TargetDependency] = [],
+        settings: SettingsDictionary = [:],
+        developmentTeamId: String? = nil,
+        extensions: [ExtensionSpec] = []
+    ) -> Project {
+        let appTargetName = appName ?? projectName
+
+        let resolvedDeploymentTargets: DeploymentTargets = deploymentTargets ?? {
+            let platforms = destinations.platforms
+            return .multiplatform(
+                iOS: platforms.contains(.iOS) ? "16.0" : nil,
+                macOS: platforms.contains(.macOS) ? "13.0" : nil,
+                watchOS: nil,
+                tvOS: nil,
+                visionOS: nil
+            )
+        }()
+
+        let hostBundleId = bundleId
+
+        let extensionTargets: [Target] = extensions.map { spec in
+            TargetFactory.makeExtension(
+                name: spec.name,
+                hostBundleId: hostBundleId,
+                destinations: destinations,
+                product: spec.product,
+                infoPlist: spec.infoPlist,
+                sources: spec.sources,
+                resources: spec.resources,
+                dependencies: spec.dependencies,
+                additionalSettings: spec.settings,
+                developmentTeamId: developmentTeamId,
+                extensionPointIdentifier: spec.extensionPointIdentifier
+            )
+        }
+
+        let allDependencies = dependencies + extensionTargets.map { .target(name: $0.name) }
+        let appTarget = TargetFactory.makeApp(
+            name: appTargetName,
+            destinations: destinations,
+            bundleId: hostBundleId,
+            deploymentTargets: resolvedDeploymentTargets,
+            infoPlist: infoPlist,
+            sources: sources,
+            resources: resources,
+            dependencies: allDependencies,
+            additionalSettings: settings,
+            developmentTeamId: developmentTeamId
+        )
+
+        return Project(
+            name: projectName,
+            targets: [appTarget] + extensionTargets
+        )
+    }
+
     public static func makeFeature(
         module: ModuleID,
         destinations: Destinations = .iOS,

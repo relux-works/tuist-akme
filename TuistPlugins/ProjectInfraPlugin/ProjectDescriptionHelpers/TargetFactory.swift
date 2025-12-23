@@ -35,7 +35,8 @@ public enum TargetFactory {
         product: Product,
         dependencies: [TargetDependency],
         resources: ResourceFileElements?,
-        additionalSettings: SettingsDictionary = [:]
+        additionalSettings: SettingsDictionary = [:],
+        tags: [Tag] = []
     ) -> Target {
         let settings: Settings = {
             guard !additionalSettings.isEmpty else { return .regular }
@@ -54,6 +55,10 @@ public enum TargetFactory {
             )
         }()
 
+        let metadata: TargetMetadata = tags.isEmpty
+            ? .default
+            : .metadata(tags: tags.map(\.value))
+
         return .target(
             name: module.implTarget,
             destinations: destinations,
@@ -63,7 +68,8 @@ public enum TargetFactory {
             sources: ["Sources/**"],
             resources: resources,
             dependencies: dependencies,
-            settings: settings
+            settings: settings,
+            metadata: metadata
         )
     }
 
@@ -87,9 +93,14 @@ public enum TargetFactory {
     public static func makeTests(
         module: ModuleID,
         destinations: Destinations,
-        dependencies: [TargetDependency]
+        dependencies: [TargetDependency],
+        tags: [Tag] = []
     ) -> Target {
-        .target(
+        let metadata: TargetMetadata = tags.isEmpty
+            ? .default
+            : .metadata(tags: tags.map(\.value))
+
+        return .target(
             name: module.testsTarget,
             destinations: destinations,
             product: .unitTests,
@@ -97,7 +108,8 @@ public enum TargetFactory {
             deploymentTargets: deploymentTargets(for: destinations),
             sources: ["Tests/**"],
             dependencies: dependencies,
-            settings: .regular
+            settings: .regular,
+            metadata: metadata
         )
     }
 

@@ -16,6 +16,11 @@ let project = ProjectFactory.makeFeature(
         // Example: .testing(.core(.networking))
     ],
     additionalSettings: [
-        : // Example: "OTHER_LDFLAGS": ["-ObjC"],
+        : // Example "OTHER_LDFLAGS": ["-ObjC"],
+    ],
+    tags: [
+        .owner(.identity),
+        .area(.auth),
+        .layer(.feature),
     ]
 )

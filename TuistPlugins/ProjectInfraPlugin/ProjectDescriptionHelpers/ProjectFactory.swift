@@ -8,7 +8,8 @@ public enum ProjectFactory {
         dependencies: [Dependency],
         testDependencies: [Dependency] = [],
         hasResources: Bool = false,
-        additionalSettings: SettingsDictionary = [:]
+        additionalSettings: SettingsDictionary = [:],
+        tags: [Tag] = []
     ) -> Project {
         validateExternalDependenciesAllowed(module: module, dependencies: dependencies, context: "makeFeature(dependencies:)")
         validateExternalDependenciesAllowed(module: module, dependencies: testDependencies, context: "makeFeature(testDependencies:)")
@@ -27,7 +28,8 @@ public enum ProjectFactory {
             product: product,
             dependencies: implDeps,
             resources: hasResources ? ["Resources/**"] : nil,
-            additionalSettings: additionalSettings
+            additionalSettings: additionalSettings,
+            tags: tags
         )
 
         let testing = TargetFactory.makeTesting(
@@ -40,7 +42,8 @@ public enum ProjectFactory {
         let tests = TargetFactory.makeTests(
             module: module,
             destinations: destinations,
-            dependencies: testDeps
+            dependencies: testDeps,
+            tags: tags
         )
 
         let scheme = Scheme.scheme(

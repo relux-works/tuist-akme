@@ -19,15 +19,22 @@ public enum TargetFactory {
 
     private static func makeSettings(
         additionalSettings: SettingsDictionary = [:],
-        developmentTeamId: String? = nil
+        developmentTeamId: String? = nil,
+        automaticSigning: Bool = false
     ) -> Settings {
         let resolvedDevelopmentTeamId = developmentTeamId ?? developmentTeamIdFromEnvironment
         let signing: SettingsDictionary = {
-            guard let resolvedDevelopmentTeamId, !resolvedDevelopmentTeamId.isEmpty else { return [:] }
-            return [
-                "DEVELOPMENT_TEAM": .string(resolvedDevelopmentTeamId),
+            guard automaticSigning else { return [:] }
+
+            var settings: SettingsDictionary = [
                 "CODE_SIGN_STYLE": "Automatic",
             ]
+
+            if let resolvedDevelopmentTeamId, !resolvedDevelopmentTeamId.isEmpty {
+                settings["DEVELOPMENT_TEAM"] = .string(resolvedDevelopmentTeamId)
+            }
+
+            return settings
         }()
 
         guard !additionalSettings.isEmpty || !signing.isEmpty else { return .regular }
@@ -149,7 +156,8 @@ public enum TargetFactory {
         resources: ResourceFileElements? = nil,
         dependencies: [TargetDependency],
         additionalSettings: SettingsDictionary = [:],
-        developmentTeamId: String? = nil
+        developmentTeamId: String? = nil,
+        automaticSigning: Bool = true
     ) -> Target {
         .target(
             name: name,
@@ -163,7 +171,8 @@ public enum TargetFactory {
             dependencies: dependencies,
             settings: makeSettings(
                 additionalSettings: additionalSettings,
-                developmentTeamId: developmentTeamId
+                developmentTeamId: developmentTeamId,
+                automaticSigning: automaticSigning
             )
         )
     }
@@ -218,7 +227,8 @@ public enum TargetFactory {
             dependencies: dependencies,
             settings: makeSettings(
                 additionalSettings: additionalSettings,
-                developmentTeamId: developmentTeamId
+                developmentTeamId: developmentTeamId,
+                automaticSigning: true
             )
         )
     }

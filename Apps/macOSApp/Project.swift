@@ -15,5 +15,6 @@ let project = ProjectFactory.makeApp(
     dependencies: [
         .project(target: "Auth", path: .relativeToRoot("Modules/Features/Auth")),
     ],
-    developmentTeamId: developmentTeamId
+    developmentTeamId: developmentTeamId,
+    automaticSigning: true
 )

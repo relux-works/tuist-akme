@@ -13,6 +13,7 @@ public enum ProjectFactory {
         dependencies: [TargetDependency] = [],
         settings: SettingsDictionary = [:],
         developmentTeamId: String? = nil,
+        automaticSigning: Bool = true,
         extensions: [ExtensionSpec] = []
     ) -> Project {
         let appTargetName = appName ?? projectName
@@ -57,7 +58,8 @@ public enum ProjectFactory {
             resources: resources,
             dependencies: allDependencies,
             additionalSettings: settings,
-            developmentTeamId: developmentTeamId
+            developmentTeamId: developmentTeamId,
+            automaticSigning: automaticSigning
         )
 
         return Project(

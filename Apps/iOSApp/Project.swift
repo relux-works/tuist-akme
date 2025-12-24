@@ -19,5 +19,6 @@ let project = ProjectFactory.makeApp(
         .project(target: "AcmeWidget", path: .relativeToRoot("Apps/iOSApp/Extensions/AcmeWidget")),
         .project(target: "Auth", path: .relativeToRoot("Modules/Features/Auth")),
     ],
-    developmentTeamId: developmentTeamId
+    developmentTeamId: developmentTeamId,
+    automaticSigning: true
 )

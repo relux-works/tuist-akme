@@ -2,14 +2,14 @@
 @preconcurrency import ProjectInfraPlugin
 @preconcurrency import ProjectDescriptionHelpers
 
-let module = ModuleID.feature(.auth)
 
 let project = ProjectFactory.makeFeature(
-    module: module,
+    module: .feature(.auth),
     destinations: Destinations.iOS.union(Destinations.macOS),
     product: .framework,
     dependencies: [
         .external(dependency: .algorithms),
+        .interface(.feature(.auth)),
         // Example: .interface(.core(.networking))
     ],
     testDependencies: [

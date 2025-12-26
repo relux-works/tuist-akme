@@ -29,3 +29,8 @@ public enum UtilityLayer: String, CaseIterable, Sendable {
 
     public static var allCases: [UtilityLayer] { [] }
 }
+
+public enum CompositionRootLayer: String, CaseIterable, Sendable {
+    case appCompositionRoot = "AppCompositionRoot"
+    case widgetCompositionRoot = "WidgetCompositionRoot"
+}

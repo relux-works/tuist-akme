@@ -19,6 +19,7 @@ LAYERS: list[tuple[str, str]] = [
     ("Core", "CoreLayer"),
     ("Shared", "SharedLayer"),
     ("Utility", "UtilityLayer"),
+    ("CompositionRoots", "CompositionRootLayer"),
 ]
 
 

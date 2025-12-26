@@ -1,6 +1,125 @@
 import ProjectDescription
 
 public enum ProjectFactory {
+    public static func makeHostApp(
+        projectName: String,
+        appName: String? = nil,
+        bundleId: String,
+        destinations: Destinations,
+        deploymentTargets: DeploymentTargets? = nil,
+        sources: SourceFilesList = ["Sources/**"],
+        resources: ResourceFileElements? = ["Resources/**"],
+        infoPlist: InfoPlist = .default,
+        compositionRoot: CompositionRoot,
+        embeddedExtensions: [ProjectTargetRef] = [],
+        capabilities: [Capability] = [],
+        settings: SettingsDictionary = [:],
+        developmentTeamId: String? = nil,
+        automaticSigning: Bool = true
+    ) -> Project {
+        let resolvedDeploymentTargets: DeploymentTargets = deploymentTargets ?? {
+            let platforms = destinations.platforms
+            return .multiplatform(
+                iOS: platforms.contains(.iOS) ? "16.0" : nil,
+                macOS: platforms.contains(.macOS) ? "13.0" : nil,
+                watchOS: nil,
+                tvOS: nil,
+                visionOS: nil
+            )
+        }()
+
+        let dependencies: [TargetDependency] =
+            [compositionRoot.dependency] + embeddedExtensions.map(\.dependency)
+
+        let entitlements = EntitlementsFactory.make(hostBundleId: bundleId, capabilities: capabilities)
+        let appTarget = TargetFactory.makeApp(
+            name: appName ?? projectName,
+            destinations: destinations,
+            bundleId: bundleId,
+            deploymentTargets: resolvedDeploymentTargets,
+            entitlements: entitlements,
+            infoPlist: infoPlist,
+            sources: sources,
+            resources: resources,
+            dependencies: dependencies,
+            additionalSettings: settings,
+            developmentTeamId: developmentTeamId,
+            automaticSigning: automaticSigning
+        )
+
+        return Project(
+            name: projectName,
+            targets: [appTarget]
+        )
+    }
+
+    public static func makeAppExtensionProject(
+        name: String,
+        hostBundleId: String,
+        destinations: Destinations,
+        product: Product,
+        compositionRoot: CompositionRoot,
+        capabilities: [Capability] = [],
+        sources: SourceFilesList = ["Sources/**"],
+        resources: ResourceFileElements? = nil,
+        infoPlist: InfoPlist = .extendingDefault(with: [:]),
+        additionalSettings: SettingsDictionary = [:],
+        developmentTeamId: String? = nil,
+        extensionPointIdentifier: String = "com.apple.widgetkit-extension"
+    ) -> Project {
+        let entitlements = EntitlementsFactory.make(hostBundleId: hostBundleId, capabilities: capabilities)
+        let target = TargetFactory.makeExtension(
+            name: name,
+            hostBundleId: hostBundleId,
+            destinations: destinations,
+            product: product,
+            infoPlist: infoPlist,
+            entitlements: entitlements,
+            sources: sources,
+            resources: resources,
+            dependencies: [compositionRoot.dependency],
+            additionalSettings: additionalSettings,
+            developmentTeamId: developmentTeamId,
+            extensionPointIdentifier: extensionPointIdentifier
+        )
+
+        return Project(
+            name: name,
+            targets: [target]
+        )
+    }
+
+    public static func makeCompositionRoot(
+        module: CompositionRoot,
+        destinations: Destinations = .iOS,
+        product: Product = .staticFramework,
+        dependencies: [CompositionRootDependency],
+        additionalSettings: SettingsDictionary = [:],
+        tags: [Tag] = []
+    ) -> Project {
+        let target = TargetFactory.makeImpl(
+            module: module.id,
+            destinations: destinations,
+            product: product,
+            dependencies: dependencies.flatMap(\.targets),
+            resources: nil,
+            additionalSettings: additionalSettings,
+            tags: tags
+        )
+
+        let scheme = Scheme.scheme(
+            name: module.id.name,
+            shared: true,
+            buildAction: .buildAction(targets: [.target(target.name)])
+        )
+
+        return Project(
+            name: module.id.name,
+            targets: [target],
+            schemes: [scheme]
+        )
+    }
+
     public static func makeApp(
         projectName: String,
         appName: String? = nil,
@@ -38,6 +157,7 @@ public enum ProjectFactory {
                 destinations: destinations,
                 product: spec.product,
                 infoPlist: spec.infoPlist,
+                entitlements: nil,
                 sources: spec.sources,
                 resources: spec.resources,
                 dependencies: spec.dependencies,
@@ -53,6 +173,7 @@ public enum ProjectFactory {
             destinations: destinations,
             bundleId: hostBundleId,
             deploymentTargets: resolvedDeploymentTargets,
+            entitlements: nil,
             infoPlist: infoPlist,
             sources: sources,
             resources: resources,

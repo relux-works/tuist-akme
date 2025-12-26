@@ -4,7 +4,7 @@ import ProjectDescriptionHelpers
 
 let developmentTeamId = Environment.developmentTeamId.getString(default: "")
 
-let project = ProjectFactory.makeApp(
+let project = ProjectFactory.makeHostApp(
     projectName: "iOSApp",
     appName: "AcmeApp",
     bundleId: AppIdentifiers.iOSApp.bundleId,
@@ -15,10 +15,10 @@ let project = ProjectFactory.makeApp(
     infoPlist: .extendingDefault(with: [
         "UILaunchScreen": [:],
     ]),
-    dependencies: [
-        .project(target: "AcmeWidget", path: .relativeToRoot("Apps/iOSApp/Extensions/AcmeWidget")),
-        .project(target: "Auth", path: .relativeToRoot("Modules/Features/Auth")),
+    compositionRoot: .app,
+    embeddedExtensions: [
+        AppProjects.iOS.acmeWidget,
     ],
-    developmentTeamId: developmentTeamId,
-    automaticSigning: true
+    capabilities: .iOSPlusAppex,
+    developmentTeamId: developmentTeamId
 )

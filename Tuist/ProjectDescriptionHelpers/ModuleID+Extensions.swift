@@ -10,6 +10,10 @@ public extension ModuleID {
         ModuleID(.core, module.rawValue)
     }
 
+    static func compositionRoot(_ module: CompositionRootLayer) -> ModuleID {
+        ModuleID(.compositionRoot, module.rawValue)
+    }
+
     static func shared(_ module: SharedLayer) -> ModuleID {
         ModuleID(.shared, module.rawValue)
     }

@@ -2,6 +2,7 @@ import ProjectDescription
 
 public enum ModuleLayer: String, Sendable {
     case core
+    case compositionRoot
     case feature
     case shared
     case utility
@@ -21,6 +22,7 @@ public struct ModuleID: Hashable, Sendable {
         switch layer {
         case .app: return .relativeToRoot("Apps/\(name)")
         case .core: return .relativeToRoot("Modules/Core/\(name)")
+        case .compositionRoot: return .relativeToRoot("Modules/CompositionRoots/\(name)")
         case .feature: return .relativeToRoot("Modules/Features/\(name)")
         case .shared: return .relativeToRoot("Modules/Shared/\(name)")
         case .utility: return .relativeToRoot("Modules/Utility/\(name)")
@@ -32,4 +34,3 @@ public struct ModuleID: Hashable, Sendable {
     public var testingTarget: String { "\(name)Testing" }
     public var testsTarget: String { "\(name)Tests" }
 }
-

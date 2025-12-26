@@ -4,7 +4,7 @@ import ProjectDescriptionHelpers
 
 let developmentTeamId = Environment.developmentTeamId.getString(default: "")
 
-let project = ProjectFactory.makeApp(
+let project = ProjectFactory.makeHostApp(
     projectName: "macOSApp",
     appName: "AcmeMacApp",
     bundleId: AppIdentifiers.macOSApp.bundleId,
@@ -12,8 +12,9 @@ let project = ProjectFactory.makeApp(
     deploymentTargets: .macOS("13.0"),
     sources: ["Sources/**"],
     resources: ["Resources/**"],
-    dependencies: [
-        .project(target: "Auth", path: .relativeToRoot("Modules/Features/Auth")),
+    compositionRoot: .app,
+    capabilities: [
+        .iCloudCloudKitContainer()
     ],
     developmentTeamId: developmentTeamId,
     automaticSigning: true

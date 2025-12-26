@@ -24,6 +24,8 @@ endif
 export TUIST_DEVELOPMENT_TEAM_ID
 
 # Bundle ID suffix is used to avoid local signing conflicts (for example `.ivan`).
+# It gets inserted after the first two bundle ID components (e.g. `com.acme`) so wildcard App IDs
+# like `com.acme.*` still match.
 # We keep the user-facing variable `BUNDLE_ID_SUFFIX` and map it to `TUIST_BUNDLE_ID_SUFFIX`.
 ifndef TUIST_BUNDLE_ID_SUFFIX
 TUIST_BUNDLE_ID_SUFFIX := $(BUNDLE_ID_SUFFIX)

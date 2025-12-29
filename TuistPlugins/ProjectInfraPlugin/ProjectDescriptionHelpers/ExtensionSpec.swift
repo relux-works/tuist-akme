@@ -6,15 +6,33 @@ import ProjectDescription
 /// - Bundle IDs are derived from the host app's bundle ID (including any environment suffix).
 /// - Signing settings (team ID) are inherited from the host app when provided.
 public struct ExtensionSpec {
+    /// Extension target name (also used as the default bundle ID component when embedding).
     public let name: String
+
+    /// The Tuist product type (typically `.appExtension`).
     public let product: Product
+
+    /// Info.plist definition for the extension target.
     public let infoPlist: InfoPlist
+
+    /// Source file globs for the extension target.
     public let sources: SourceFilesList
+
+    /// Optional resource globs for the extension target.
     public let resources: ResourceFileElements?
+
+    /// Target dependencies of the extension (in addition to any host wiring).
     public let dependencies: [TargetDependency]
+
+    /// Additional build settings for the extension target.
     public let settings: SettingsDictionary
+
+    /// The `NSExtensionPointIdentifier` value for the extension (e.g. WidgetKit).
     public let extensionPointIdentifier: String
 
+    /// Creates an extension specification.
+    ///
+    /// When `sources` is omitted, it defaults to `Extensions/<name>/Sources/**`.
     public init(
         name: String,
         product: Product,

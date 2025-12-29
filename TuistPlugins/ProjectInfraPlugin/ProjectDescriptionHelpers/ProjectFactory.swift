@@ -1,6 +1,15 @@
 import ProjectDescription
 
+/// High-level project factories that enforce repository conventions.
+///
+/// These helpers centralize common project shapes (apps, features, composition roots) and apply
+/// architecture rules (for example, external dependency allow-lists).
 public enum ProjectFactory {
+    /// Creates a host app project that links a composition root and optionally embeds extensions.
+    ///
+    /// This is the recommended app entry point: the app target depends on a single composition
+    /// root (which wires feature implementations) and entitlements are generated from
+    /// `capabilities`.
     public static func makeHostApp(
         projectName: String,
         appName: String? = nil,
@@ -53,6 +62,9 @@ public enum ProjectFactory {
         )
     }
 
+    /// Creates a standalone app extension project linked to a composition root.
+    ///
+    /// The extension bundle identifier is derived from `hostBundleId` and `name`.
     public static func makeAppExtensionProject(
         name: String,
         hostBundleId: String,
@@ -89,6 +101,10 @@ public enum ProjectFactory {
         )
     }
 
+    /// Creates a composition root project.
+    ///
+    /// Composition roots are the only place where it's acceptable to depend on other modules'
+    /// implementation targets directly.
     public static func makeCompositionRoot(
         module: CompositionRoot,
         destinations: Destinations = .iOS,
@@ -120,6 +136,9 @@ public enum ProjectFactory {
         )
     }
 
+    /// Creates an app project with optional inline extension targets.
+    ///
+    /// Prefer `makeHostApp` when using composition roots and the capabilities DSL.
     public static func makeApp(
         projectName: String,
         appName: String? = nil,
@@ -189,6 +208,9 @@ public enum ProjectFactory {
         )
     }
 
+    /// Creates a standard feature module project (Interface + Impl + Testing + Tests).
+    ///
+    /// This factory also enforces external dependency rules for the feature's layer.
     public static func makeFeature(
         module: ModuleID,
         destinations: Destinations = .iOS,
@@ -248,6 +270,7 @@ public enum ProjectFactory {
         )
     }
 
+    /// Enforces the rule that Interface targets must not link external dependencies.
     private static func validateNoExternalDependencies(module: ModuleID, target: Target) {
         let externals = target.dependencies.compactMap { dependency -> String? in
             if case let .external(name, _) = dependency { return name }
@@ -268,6 +291,7 @@ public enum ProjectFactory {
         }
     }
 
+    /// Enforces allow-listed external dependencies per module layer.
     private static func validateExternalDependenciesAllowed(module: ModuleID, dependencies: [Dependency], context: String) {
         let forbidden = dependencies.compactMap { dependency -> Dependency.ExternalDependencyMetadata? in
             guard let external = dependency.externalDependency else { return nil }

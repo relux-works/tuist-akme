@@ -17,6 +17,7 @@ public struct AreaTagValue: Hashable, Sendable {
     /// - `Tag.area(.auth).value == "area:auth"`
     public let rawValue: String
 
+    /// Creates an area tag value.
     private init(_ rawValue: String) {
         self.rawValue = rawValue
     }

@@ -6,14 +6,21 @@ import ProjectInfraPlugin
 /// - local bundle ID suffixes are enabled (`TUIST_BUNDLE_ID_SUFFIX`), or
 /// - targets are split across multiple `Project.swift` files.
 public enum AppIdentifiers {
+    /// iOS host app bundle identifier.
     public enum iOSApp {
+        /// Base bundle identifier without any local environment suffix.
         public static let baseBundleId = "com.acme.app"
+
+        /// Bundle identifier with any configured local environment suffix applied.
         public static var bundleId: String { ConfigurationHelper.applyEnvironmentSuffix(to: baseBundleId) }
     }
 
+    /// macOS host app bundle identifier.
     public enum macOSApp {
+        /// Base bundle identifier without any local environment suffix.
         public static let baseBundleId = "com.acme.mac-app"
+
+        /// Bundle identifier with any configured local environment suffix applied.
         public static var bundleId: String { ConfigurationHelper.applyEnvironmentSuffix(to: baseBundleId) }
     }
 }
-

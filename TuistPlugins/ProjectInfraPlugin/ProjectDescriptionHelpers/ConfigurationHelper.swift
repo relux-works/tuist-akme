@@ -1,6 +1,9 @@
 import Foundation
 import ProjectDescription
 
+/// Helper utilities for applying project-wide build conventions.
+///
+/// Currently this is focused on bundle identifier namespacing to avoid local signing conflicts.
 public enum ConfigurationHelper {
     /// Applies the environment-defined suffix (if any) to the provided base bundle identifier.
     ///

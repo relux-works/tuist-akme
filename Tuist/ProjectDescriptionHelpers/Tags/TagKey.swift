@@ -48,6 +48,7 @@ public struct TagKey: Hashable, Sendable {
     /// - `Tag.key(.owner, "checkout").value == "owner:checkout"`
     public let rawValue: String
 
+    /// Creates a tag key from its serialized string form.
     private init(_ rawValue: String) {
         self.rawValue = rawValue
     }

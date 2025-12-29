@@ -1,9 +1,14 @@
 import ProjectDescription
 
+/// Canonical build configurations used across the project.
+///
+/// This provides a single place for default build settings and configuration names so target
+/// factories stay consistent.
 public enum BuildEnvironment: String, CaseIterable {
     case debug
     case release
 
+    /// The Tuist configuration name corresponding to this build environment.
     public var configurationName: ConfigurationName {
         switch self {
         case .debug: return .debug
@@ -11,6 +16,7 @@ public enum BuildEnvironment: String, CaseIterable {
         }
     }
 
+    /// Default build settings for this environment.
     public func settings() -> SettingsDictionary {
         var settings: SettingsDictionary = [:]
 
@@ -38,6 +44,7 @@ public enum BuildEnvironment: String, CaseIterable {
         return settings
     }
 
+    /// Builds a Tuist `Configuration` for this environment.
     public func configuration() -> Configuration {
         switch self {
         case .debug:
@@ -48,13 +55,19 @@ public enum BuildEnvironment: String, CaseIterable {
     }
 }
 
+/// Convenience `Settings` constructors used by project factories.
 public extension Settings {
+    /// Standard project settings used by most targets.
     static var regular: Settings {
         .settings(
             configurations: BuildEnvironment.allCases.map { $0.configuration() }
         )
     }
 
+    /// Settings for external dependency targets (SPM or prebuilt binaries).
+    ///
+    /// These targets typically don't need additional project-specific overrides beyond the
+    /// environment defaults.
     static var externalDependencyModuleSettings: Settings {
         .settings(
             configurations: BuildEnvironment.allCases.map { environment in

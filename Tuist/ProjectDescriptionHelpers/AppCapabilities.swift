@@ -7,8 +7,15 @@ import ProjectInfraPlugin
 /// Keep this centralized so app extensions can "inherit" capabilities without duplicating
 /// identifier logic across multiple `Project.swift` manifests.
 extension [Capability] {
+    /// Capabilities shared by the iOS host app and its app extensions.
     public static let iOSPlusAppex: [Capability] = [
         .appGroups(),
-        .iCloudCloudKitContainer()
+        .iCloud(services: [.cloudKit]),
+        .keychainSharing(),
+        .keychainSharing(group: .custom(id: "testKeychainGroupId")),
+        .walletPassType(id: .default),
+        .applePayMerchant(),
+        .iCloudUbiquityContainer()
+//        .iCloudCloudKitContainer()
     ]
 }

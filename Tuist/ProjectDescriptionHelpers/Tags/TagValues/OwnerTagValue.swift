@@ -18,6 +18,7 @@ public struct OwnerTagValue: Hashable, Sendable {
     /// - `Tag.owner(.checkout).value == "owner:checkout"`
     public let rawValue: String
 
+    /// Creates an owner tag value.
     private init(_ rawValue: String) {
         self.rawValue = rawValue
     }

@@ -1,11 +1,20 @@
 import ProjectDescription
 
+/// Lower-level target factories that apply build conventions.
+///
+/// `ProjectFactory` composes these into complete projects. `TargetFactory` is responsible for:
+/// - naming conventions (Interface/Impl/Testing/Tests)
+/// - bundle ID conventions
+/// - default deployment targets
+/// - signing settings (Team ID / automatic signing)
 public enum TargetFactory {
+    /// Development Team ID resolved from the environment (when present).
     private static var developmentTeamIdFromEnvironment: String? {
         let value = Environment.developmentTeamId.getString(default: "")
         return value.isEmpty ? nil : value
     }
 
+    /// Default multiplatform deployment targets for the given destinations.
     private static func deploymentTargets(for destinations: Destinations) -> DeploymentTargets {
         let platforms = destinations.platforms
         return .multiplatform(
@@ -17,6 +26,7 @@ public enum TargetFactory {
         )
     }
 
+    /// Builds `Settings` by merging environment defaults, signing, and additional overrides.
     private static func makeSettings(
         additionalSettings: SettingsDictionary = [:],
         developmentTeamId: String? = nil,
@@ -28,6 +38,9 @@ public enum TargetFactory {
 
             var settings: SettingsDictionary = [
                 "CODE_SIGN_STYLE": "Automatic",
+                // Required for macOS apps with entitlements (otherwise Xcode may default to
+                // “Sign to Run Locally”, which can't satisfy capabilities like iCloud/App Groups).
+                "CODE_SIGN_IDENTITY": "Apple Development",
             ]
 
             if let resolvedDevelopmentTeamId, !resolvedDevelopmentTeamId.isEmpty {
@@ -56,6 +69,7 @@ public enum TargetFactory {
         )
     }
 
+    /// Creates a module Interface target (`<Name>Interface`).
     public static func makeInterface(
         module: ModuleID,
         destinations: Destinations,
@@ -73,6 +87,7 @@ public enum TargetFactory {
         )
     }
 
+    /// Creates a module implementation target (`<Name>`).
     public static func makeImpl(
         module: ModuleID,
         destinations: Destinations,
@@ -106,6 +121,7 @@ public enum TargetFactory {
         )
     }
 
+    /// Creates a module Testing helpers target (`<Name>Testing`).
     public static func makeTesting(
         module: ModuleID,
         destinations: Destinations,
@@ -123,6 +139,7 @@ public enum TargetFactory {
         )
     }
 
+    /// Creates a module unit tests target (`<Name>Tests`).
     public static func makeTests(
         module: ModuleID,
         destinations: Destinations,
@@ -146,6 +163,7 @@ public enum TargetFactory {
         )
     }
 
+    /// Creates a host application target.
     public static func makeApp(
         name: String,
         destinations: Destinations,
@@ -179,6 +197,10 @@ public enum TargetFactory {
         )
     }
 
+    /// Creates an app extension target.
+    ///
+    /// The extension bundle identifier is derived from `hostBundleId` and `bundleIdComponent` (or
+    /// `name.lowercased()`).
     public static func makeExtension(
         name: String,
         hostBundleId: String,

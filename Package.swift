@@ -57,7 +57,7 @@ private extension Settings {
     static var externalDependencyModuleSettings: Settings {
         .settings(
             configurations: BuildEnvironment.allCases.map { environment in
-                var settings = environment.settings()
+                let settings = environment.settings()
                 return environment.configuration(with: settings)
             }
         )
@@ -67,6 +67,8 @@ private extension Settings {
 let packageSettings = PackageSettings(
     productTypes: [
         "Algorithms": .framework,
+        "RealModule": .framework,
+        "_NumericsShims": .framework,
     ],
     baseSettings: .externalDependencyModuleSettings
 )

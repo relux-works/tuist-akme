@@ -71,10 +71,12 @@ public enum ProjectFactory {
 
     /// Creates a standalone app extension project linked to a composition root.
     ///
-    /// The extension bundle identifier is derived from `hostBundleId` and `name`.
+    /// The extension bundle identifier is derived from `hostBundleId` and `bundleIdType`.
     public static func makeAppExtensionProject(
         name: String,
         hostBundleId: String,
+        bundleIdType: String,
+        bundleIdName: String? = nil,
         destinations: Destinations,
         product: Product,
         compositionRoot: CompositionRoot,
@@ -103,7 +105,9 @@ public enum ProjectFactory {
             dependencies: [compositionRoot.dependency],
             additionalSettings: additionalSettings,
             developmentTeamId: developmentTeamId,
-            extensionPointIdentifier: extensionPointIdentifier
+            extensionPointIdentifier: extensionPointIdentifier,
+            bundleIdType: bundleIdType,
+            bundleIdName: bundleIdName
         )
 
         return Project(
@@ -195,7 +199,9 @@ public enum ProjectFactory {
                 dependencies: spec.dependencies,
                 additionalSettings: spec.settings,
                 developmentTeamId: developmentTeamId,
-                extensionPointIdentifier: spec.extensionPointIdentifier
+                extensionPointIdentifier: spec.extensionPointIdentifier,
+                bundleIdType: spec.bundleIdType,
+                bundleIdName: spec.bundleIdName
             )
         }
 

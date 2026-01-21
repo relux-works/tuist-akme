@@ -4,7 +4,7 @@
 
 
 let project = ProjectFactory.makeFeature(
-    module: .feature(.auth),
+    module: .feature(.auth, scope: .darwin),
     destinations: Destinations.iOS.union(Destinations.macOS),
     product: .framework,
     dependencies: [

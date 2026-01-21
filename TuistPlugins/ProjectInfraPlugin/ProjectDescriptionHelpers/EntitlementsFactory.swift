@@ -51,6 +51,8 @@ public enum EntitlementsFactory {
 
     /// Builds a normalized entitlement dictionary for the given platform.
     private static func makeDictionary(hostBundleId: String, capabilities: [Capability], platform: Platform) -> NormalizedEntitlements {
+        let sharedRoot = resolveSharedRoot()
+
         var keychainAccessGroups: Set<String> = []
         var applicationGroups: Set<String> = []
         var ubiquityContainerIdentifiers: [String] = []
@@ -69,16 +71,22 @@ public enum EntitlementsFactory {
 
                 if services.contains(.documents) {
                     iCloudServices.insert("CloudDocuments")
-                    ubiquityContainerIdentifiers.append(contentsOf: resolvedContainers.map { resolveICloudContainer($0, hostBundleId: hostBundleId) })
+                    ubiquityContainerIdentifiers.append(contentsOf: resolvedContainers.map { resolveICloudContainer($0, hostBundleId: hostBundleId, sharedRoot: sharedRoot) })
                 }
 
                 if services.contains(.cloudKit) {
                     iCloudServices.insert("CloudKit")
-                    cloudKitContainerIdentifiers.append(contentsOf: resolvedContainers.map { resolveICloudContainer($0, hostBundleId: hostBundleId) })
+                    cloudKitContainerIdentifiers.append(contentsOf: resolvedContainers.map { resolveICloudContainer($0, hostBundleId: hostBundleId, sharedRoot: sharedRoot) })
                 }
 
                 if services.contains(.keyValueStorage) {
-                    ubiquityKVStoreIdentifier = resolvePrefixedIdentifier(keyValueStoreIdentifier, defaultUnprefixed: hostBundleId, afterComponents: 2)
+                    ubiquityKVStoreIdentifier = resolveIdentifierPrefixed(
+                        keyValueStoreIdentifier,
+                        defaultUnprefixed: hostBundleId,
+                        sharedUnprefixed: sharedRoot,
+                        afterComponents: 2,
+                        prefixMacro: "$(TeamIdentifierPrefix)"
+                    )
                 }
 
             case let .healthKit(options):
@@ -106,27 +114,33 @@ public enum EntitlementsFactory {
                 }
 
             case let .keychainSharing(group):
-                keychainAccessGroups.insert(resolveKeychainAccessGroup(group, hostBundleId: hostBundleId))
+                keychainAccessGroups.insert(resolveKeychainAccessGroup(group, hostBundleId: hostBundleId, sharedRoot: sharedRoot))
 
             case let .appGroups(group):
-                applicationGroups.insert(resolveAppGroup(group, hostBundleId: hostBundleId))
+                applicationGroups.insert(resolveAppGroup(group, hostBundleId: hostBundleId, sharedRoot: sharedRoot))
 
             case let .iCloudUbiquityContainer(container):
                 iCloudServices.insert("CloudDocuments")
-                ubiquityContainerIdentifiers.append(resolveICloudContainer(container, hostBundleId: hostBundleId))
+                ubiquityContainerIdentifiers.append(resolveICloudContainer(container, hostBundleId: hostBundleId, sharedRoot: sharedRoot))
 
             case let .iCloudCloudKitContainer(container):
                 iCloudServices.insert("CloudKit")
-                cloudKitContainerIdentifiers.append(resolveICloudContainer(container, hostBundleId: hostBundleId))
+                cloudKitContainerIdentifiers.append(resolveICloudContainer(container, hostBundleId: hostBundleId, sharedRoot: sharedRoot))
 
             case let .iCloudKeyValueStore(id):
-                ubiquityKVStoreIdentifier = resolvePrefixedIdentifier(id, defaultUnprefixed: hostBundleId, afterComponents: 2)
+                ubiquityKVStoreIdentifier = resolveIdentifierPrefixed(
+                    id,
+                    defaultUnprefixed: hostBundleId,
+                    sharedUnprefixed: sharedRoot,
+                    afterComponents: 2,
+                    prefixMacro: "$(TeamIdentifierPrefix)"
+                )
 
             case let .applePayMerchant(id):
-                merchantIdentifiers.insert(resolveMerchantIdentifier(id, hostBundleId: hostBundleId))
+                merchantIdentifiers.insert(resolveMerchantIdentifier(id, hostBundleId: hostBundleId, sharedRoot: sharedRoot))
 
             case let .walletPassType(id):
-                passTypeIdentifiers.insert(resolvePassTypeIdentifier(id, hostBundleId: hostBundleId))
+                passTypeIdentifiers.insert(resolvePassTypeIdentifier(id, hostBundleId: hostBundleId, sharedRoot: sharedRoot))
 
             case let .associatedDomains(domains):
                 associatedDomains.formUnion(domains)
@@ -633,17 +647,34 @@ public enum EntitlementsFactory {
     /// Resolves a Keychain Access Group entry (`keychain-access-groups`).
     ///
     /// Default: `$(AppIdentifierPrefix)<host bundle id>`
-    private static func resolveKeychainAccessGroup(_ id: Capability.Identifier, hostBundleId: String) -> String {
-        resolvePrefixedIdentifier(id, defaultUnprefixed: hostBundleId, afterComponents: 2)
+    private static func resolveKeychainAccessGroup(_ id: Capability.Identifier, hostBundleId: String, sharedRoot: String) -> String {
+        resolveIdentifierPrefixed(
+            id,
+            defaultUnprefixed: hostBundleId,
+            sharedUnprefixed: sharedRoot,
+            afterComponents: 2,
+            prefixMacro: "$(AppIdentifierPrefix)"
+        )
+    }
+
+    /// Resolves the explicit shared identifier root used for cross-platform capability identifiers.
+    ///
+    /// This applies the local environment suffix (when present).
+    private static func resolveSharedRoot() -> String {
+        let coreRoot = Environment.coreRoot.getString(default: "com.acme.akmeapp")
+        let configured = Environment.sharedRoot.getString(default: "\(coreRoot).shared")
+        return ConfigurationHelper.applyEnvironmentSuffix(to: configured)
     }
 
     /// Resolves an App Group identifier entry (`com.apple.security.application-groups`).
     ///
     /// Default: `group.<host bundle id>`
-    private static func resolveAppGroup(_ id: Capability.Identifier, hostBundleId: String) -> String {
+    private static func resolveAppGroup(_ id: Capability.Identifier, hostBundleId: String, sharedRoot: String) -> String {
         switch id {
         case .default:
             return "group.\(hostBundleId)"
+        case .shared:
+            return "group.\(sharedRoot)"
         case let .custom(id: customId, namespacing: namespacing):
             let trimmed = customId.trimmingCharacters(in: .whitespacesAndNewlines)
             guard trimmed.hasPrefix("group.") else {
@@ -666,10 +697,12 @@ public enum EntitlementsFactory {
     /// Resolves an iCloud container identifier (used for iCloud Documents and CloudKit containers).
     ///
     /// Default: `iCloud.<host bundle id>`
-    private static func resolveICloudContainer(_ id: Capability.Identifier, hostBundleId: String) -> String {
+    private static func resolveICloudContainer(_ id: Capability.Identifier, hostBundleId: String, sharedRoot: String) -> String {
         switch id {
         case .default:
             return "iCloud.\(hostBundleId)"
+        case .shared:
+            return "iCloud.\(sharedRoot)"
         case let .custom(id: customId, namespacing: namespacing):
             let trimmed = customId.trimmingCharacters(in: .whitespacesAndNewlines)
             return applyNamespacing(trimmed, namespacing: namespacing, afterComponents: 3)
@@ -679,10 +712,12 @@ public enum EntitlementsFactory {
     /// Resolves an Apple Pay merchant identifier entry (`com.apple.developer.in-app-payments`).
     ///
     /// Default: `merchant.<host bundle id>`
-    private static func resolveMerchantIdentifier(_ id: Capability.Identifier, hostBundleId: String) -> String {
+    private static func resolveMerchantIdentifier(_ id: Capability.Identifier, hostBundleId: String, sharedRoot: String) -> String {
         switch id {
         case .default:
             return "merchant.\(hostBundleId)"
+        case .shared:
+            return "merchant.\(sharedRoot)"
         case let .custom(id: customId, namespacing: namespacing):
             let trimmed = customId.trimmingCharacters(in: .whitespacesAndNewlines)
             return applyNamespacing(trimmed, namespacing: namespacing, afterComponents: 3)
@@ -692,35 +727,38 @@ public enum EntitlementsFactory {
     /// Resolves a Wallet pass type identifier entry (`com.apple.developer.pass-type-identifiers`).
     ///
     /// Default: `pass.<host bundle id>`
-    private static func resolvePassTypeIdentifier(_ id: Capability.Identifier, hostBundleId: String) -> String {
+    private static func resolvePassTypeIdentifier(_ id: Capability.Identifier, hostBundleId: String, sharedRoot: String) -> String {
         switch id {
         case .default:
             return "pass.\(hostBundleId)"
+        case .shared:
+            return "pass.\(sharedRoot)"
         case let .custom(id: customId, namespacing: namespacing):
             let trimmed = customId.trimmingCharacters(in: .whitespacesAndNewlines)
             return applyNamespacing(trimmed, namespacing: namespacing, afterComponents: 3)
         }
     }
 
-    /// Resolves an identifier that must be prefixed with the App Identifier Prefix.
-    ///
-    /// The returned value uses the `$(AppIdentifierPrefix)` macro so Xcode can inject the correct
-    /// Team/App ID prefix at build time.
-    private static func resolvePrefixedIdentifier(
+    /// Resolves an identifier that must be prefixed with an Xcode-provided identifier prefix macro.
+    private static func resolveIdentifierPrefixed(
         _ id: Capability.Identifier,
         defaultUnprefixed: String,
-        afterComponents: Int
+        sharedUnprefixed: String,
+        afterComponents: Int,
+        prefixMacro: String
     ) -> String {
         let unprefixed: String
         switch id {
         case .default:
             unprefixed = defaultUnprefixed
+        case .shared:
+            unprefixed = sharedUnprefixed
         case let .custom(id: customId, namespacing: namespacing):
             let trimmed = customId.trimmingCharacters(in: .whitespacesAndNewlines)
             unprefixed = applyNamespacing(trimmed, namespacing: namespacing, afterComponents: afterComponents)
         }
 
-        return "$(AppIdentifierPrefix)\(unprefixed)"
+        return "\(prefixMacro)\(unprefixed)"
     }
 
     /// Applies local namespacing rules to a custom identifier.

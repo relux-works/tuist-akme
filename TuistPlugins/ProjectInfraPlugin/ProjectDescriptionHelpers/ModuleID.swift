@@ -8,11 +8,25 @@ import ProjectDescription
 /// - bundle ID conventions
 public enum ModuleLayer: String, Sendable {
     case core
-    case compositionRoot
+    case compositionRoot = "compositionroot"
     case feature
     case shared
     case utility
     case app
+}
+
+/// Coarse portability scope for a module.
+///
+/// This is used to encode portability in derived identifiers (for example bundle IDs) so the
+/// target graph can be inspected without requiring additional metadata.
+public enum ModuleScope: String, Sendable {
+    case common
+    case darwin
+    case ios
+    case macos
+    case android
+    case linux
+    case windows
 }
 
 /// A strongly-typed identifier for a module in the repository.
@@ -21,6 +35,9 @@ public enum ModuleLayer: String, Sendable {
 /// - project paths (`Modules/<Layer>/<Name>`)
 /// - target names (`<Name>Interface`, `<Name>`, `<Name>Testing`, `<Name>Tests`)
 public struct ModuleID: Hashable, Sendable {
+    /// Portability scope (common/darwin/ios/macos/etc).
+    public let scope: ModuleScope
+
     /// Module layer (core/feature/shared/utility/etc).
     public let layer: ModuleLayer
 
@@ -29,6 +46,14 @@ public struct ModuleID: Hashable, Sendable {
 
     /// Creates a module identifier.
     public init(_ layer: ModuleLayer, _ name: String) {
+        self.scope = .common
+        self.layer = layer
+        self.name = name
+    }
+
+    /// Creates a module identifier with an explicit portability scope.
+    public init(_ scope: ModuleScope, _ layer: ModuleLayer, _ name: String) {
+        self.scope = scope
         self.layer = layer
         self.name = name
     }

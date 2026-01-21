@@ -89,6 +89,11 @@ public struct Capability: Hashable, Sendable {
         /// Uses the capability’s default identifier derived from the host bundle ID.
         case `default`
 
+        /// Uses the capability’s default identifier derived from the repo-wide shared identifier root.
+        ///
+        /// This is an explicit opt-in for cross-platform sharing (for example iOS + macOS).
+        case shared
+
         /// Uses an explicit identifier.
         ///
         /// The `namespacing` parameter controls whether the local environment suffix is applied; default behavior applies env suffix.
@@ -135,6 +140,9 @@ public struct Capability: Hashable, Sendable {
         /// Uses the capability’s default identifier derived from the host bundle ID.
         case `default`
 
+        /// Uses the capability’s shared identifier derived from the repo-wide shared identifier root.
+        case shared
+
         /// Uses an explicit identifier.
         ///
         /// - Important: The value must start with `group.`. Prefer using
@@ -148,6 +156,8 @@ public struct Capability: Hashable, Sendable {
             switch self {
             case .default:
                 return .default
+            case .shared:
+                return .shared
             case let .custom(id: id, namespacing: namespacing):
                 return .custom(id: id.rawValue, namespacing: namespacing)
             }
@@ -352,7 +362,7 @@ public struct Capability: Hashable, Sendable {
     ///
     /// Defaults:
     /// - Containers: `[iCloud.<host bundle id>]`
-    /// - Key-value store identifier: `$(AppIdentifierPrefix)<host bundle id>`
+    /// - Key-value store identifier: `$(TeamIdentifierPrefix)<host bundle id>`
     public static func iCloud(
         services: ICloudServices,
         containers: [Identifier] = [.default],
@@ -402,7 +412,7 @@ public struct Capability: Hashable, Sendable {
 
     /// iCloud key-value store identifier (`com.apple.developer.ubiquity-kvstore-identifier`).
     ///
-    /// Default: `$(AppIdentifierPrefix)<host bundle id>`
+    /// Default: `$(TeamIdentifierPrefix)<host bundle id>`
     public static func iCloudKeyValueStore(id: Identifier = .default) -> Self {
         .init(.iCloudKeyValueStore(id: id))
     }

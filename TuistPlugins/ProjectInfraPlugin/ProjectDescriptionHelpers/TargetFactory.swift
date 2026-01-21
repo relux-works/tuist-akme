@@ -201,8 +201,10 @@ public enum TargetFactory {
 
     /// Creates an app extension target.
     ///
-    /// The extension bundle identifier is derived from `hostBundleId` and `bundleIdComponent` (or
-    /// `name.lowercased()`).
+    /// The extension bundle identifier is derived from the host app bundle ID, ensuring the
+    /// required prefix relationship.
+    ///
+    /// Format: `<hostBundleId>.appex.<type>[.<name>]`
     public static func makeExtension(
         name: String,
         hostBundleId: String,
@@ -216,10 +218,27 @@ public enum TargetFactory {
         additionalSettings: SettingsDictionary = [:],
         developmentTeamId: String? = nil,
         extensionPointIdentifier: String = "com.apple.widgetkit-extension",
-        bundleIdComponent: String? = nil
+        bundleIdType: String,
+        bundleIdName: String? = nil
     ) -> Target {
-        let resolvedBundleIdComponent = bundleIdComponent ?? name.lowercased()
-        let bundleId = "\(hostBundleId).\(resolvedBundleIdComponent)"
+        let typeSegments = IdentifierSegments.normalizeDotSeparated(bundleIdType)
+        let nameSegments = bundleIdName.map(IdentifierSegments.normalizeDotSeparated) ?? []
+
+        guard !typeSegments.isEmpty else {
+            fatalError(
+                """
+                🛑 INVALID EXTENSION BUNDLE ID TYPE 🛑
+                ---------------------------------------------------
+                Target: \(name)
+                hostBundleId: \(hostBundleId)
+                bundleIdType: \(bundleIdType)
+                Rule: bundleIdType must contain at least one non-empty identifier segment.
+                ---------------------------------------------------
+                """
+            )
+        }
+
+        let bundleId = ([hostBundleId, "appex"] + typeSegments + nameSegments).joined(separator: ".")
 
         let enforcedInfoPlist: InfoPlist = {
             let nsExtension: Plist.Value = [
